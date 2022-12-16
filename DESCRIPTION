@@ -47,7 +47,7 @@ Imports:
     irlba,
     jsonlite,
     KernSmooth,
-    leiden (>= 0.3.1),
+    leidenbase,
     lmtest,
     MASS,
     Matrix (>= 1.5-0),
