@@ -6,10 +6,22 @@ pbmc_small <- suppressWarnings(UpdateSeuratObject(pbmc_small))
 ref <- pbmc_small
 ref <- FindVariableFeatures(object = ref, verbose = FALSE, nfeatures = 100)
 query <- CreateSeuratObject(
-  counts = GetAssayData(object = pbmc_small[['RNA']], slot = "counts") + rpois(n = ncol(pbmc_small), lambda = 1)
+  counts = as.sparse(
+    GetAssayData(
+      object = pbmc_small[['RNA']],
+      layer = "counts") + rpois(n = ncol(pbmc_small),
+      lambda = 1
+    )
+  )
 )
 query2 <- CreateSeuratObject(
-  counts = GetAssayData(object = pbmc_small[['RNA']], slot = "counts")[, 1:40] + rpois(n = ncol(pbmc_small), lambda = 1)
+  counts = as.sparse(
+    LayerData(
+      object = pbmc_small[['RNA']],
+      layer = "counts")[, 1:40] + rpois(n = ncol(pbmc_small),
+      lambda = 1
+    )
+  )
 )
 query.list <- list(query, query2)
 query.list <- lapply(X = query.list, FUN = NormalizeData, verbose = FALSE)
@@ -70,10 +82,10 @@ test_that("IntegrateData with two objects default work", {
   expect_equal(Tool(int2), "Integration")
   expect_equal(dim(int2[["integrated"]]), c(133, 160))
   expect_equal(length(VariableFeatures(int2)), 133)
-  expect_equal(GetAssayData(int2[["integrated"]], slot = "counts"), new("dgCMatrix"))
-  expect_equal(GetAssayData(int2[['integrated']], slot = "scale.data"), matrix())
-  expect_equal(sum(GetAssayData(int2[["integrated"]])[1, ]), 44.97355, tolerance = 1e-3)
-  expect_equal(sum(GetAssayData(int2[["integrated"]])[, 1]), 78.8965706046, tolerance = 1e-6)
+  expect_equal(GetAssayData(int2[["integrated"]], layer = "counts"), new("dgCMatrix"))
+  expect_equal(GetAssayData(int2[['integrated']], layer = "scale.data"), matrix())
+  expect_equal(sum(GetAssayData(int2[["integrated"]], layer = "data")[1, ]), 44.97355, tolerance = 1e-3)
+  expect_equal(sum(GetAssayData(int2[["integrated"]], layer = "data")[, 1]), 78.8965706046, tolerance = 1e-6)
   expect_equal(Tool(object = int2, slot = "Integration")@sample.tree, matrix(c(-1, -2), nrow  = 1))
 })
 
@@ -84,10 +96,10 @@ test_that("IntegrateData with three objects default work", {
   expect_equal(Tool(int3), "Integration")
   expect_equal(dim(int3[["integrated"]]), c(169, 200))
   expect_equal(length(VariableFeatures(int3)), 169)
-  expect_equal(GetAssayData(int3[["integrated"]], slot = "counts"), new("dgCMatrix"))
-  expect_equal(GetAssayData(int3[['integrated']], slot = "scale.data"), matrix())
-  expect_equal(sum(GetAssayData(int3[["integrated"]])[1, ]), 372.829, tolerance = 1e-6)
-  expect_equal(sum(GetAssayData(int3[["integrated"]])[, 1]), 482.5009, tolerance = 1e-6)
+  expect_equal(GetAssayData(int3[["integrated"]], layer = "counts"), new("dgCMatrix"))
+  expect_equal(GetAssayData(int3[['integrated']], layer = "scale.data"), matrix())
+  expect_equal(sum(GetAssayData(int3[["integrated"]], layer = "data")[1, ]), 372.829, tolerance = 1e-6)
+  expect_equal(sum(GetAssayData(int3[["integrated"]], layer = "data")[, 1]), 482.5009, tolerance = 1e-6)
   expect_equal(Tool(object = int3, slot = "Integration")@sample.tree, matrix(c(-2, -3, 1, -1), nrow  = 2, byrow = TRUE))
 })
 
@@ -100,5 +112,3 @@ test_that("Input validates correctly ", {
   #expect_warning(IntegrateData(anchorset = anchors2, k.weight = 50, features = c(rownames(ref), "BAD")))
   #expect_warning(IntegrateData(anchorset = anchors2, k.weight = 50, dims = 1:1000))
 })
-
-

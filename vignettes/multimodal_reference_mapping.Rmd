@@ -23,7 +23,8 @@ knitr::knit_hooks$set(time_it = local({
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
-  time_it = TRUE
+  time_it = TRUE,
+  error = TRUE
 )
 ```
 
@@ -41,30 +42,24 @@ In this vignette, we demonstrate how to use a previously established reference t
 
 To run this vignette please install Seurat v4, available on CRAN. Additionally, you will need to install the `SeuratDisk` package.
 
-```{r install, eval = FALSE}
-install.packages("Seurat")
-remotes::install_github("mojaveazure/seurat-disk")
-```
-
 ```{r packages, cache=FALSE}
 library(Seurat)
-library(SeuratDisk)
 library(ggplot2)
 library(patchwork)
 ```
 
-```{r, include = FALSE, cache=FALSE}
-options(SeuratData.repo.use = "http://satijalab04.nygenome.org")
+```{r, include = TRUE, cache=FALSE}
+options(SeuratData.repo.use = "http://seurat.nygenome.org")
 ```
 
 # Example 1: Mapping human peripheral blood cells 
 
 ## A Multimodal PBMC Reference Dataset
 
-We load the reference (download [here](https://atlas.fredhutch.org/data/nygc/multimodal/pbmc_multimodal.h5seurat)) from our recent [paper](https://doi.org/10.1016/j.cell.2021.04.048), and visualize the pre-computed UMAP. This reference is stored as an h5Seurat file, a format that enables on-disk storage of multimodal Seurat objects (more details on h5Seurat and `SeuratDisk` can be found [here](https://mojaveazure.github.io/seurat-disk/index.html)).
+We load the reference from our recent [paper](https://doi.org/10.1016/j.cell.2021.04.048), and visualize the pre-computed UMAP. 
 
 ```{r pbmc.ref}
-reference <- LoadH5Seurat("../data/pbmc_multimodal.h5seurat")
+reference <- readRDS("/brahms/hartmana/vignette_data/pbmc_multimodal_2023.rds")
 ```
 
 ```{r ref.dimplot}
@@ -78,6 +73,9 @@ To demonstrate mapping to this multimodal reference, we will use a dataset of 2,
 ```{r 3k.load}
 library(SeuratData)
 InstallData('pbmc3k')
+
+pbmc3k <- LoadData('pbmc3k')
+pbmc3k <- UpdateSeuratObject(pbmc3k)
 ```
 
 The reference was normalized using `SCTransform()`, so we use the same approach to normalize the query here.
@@ -165,7 +163,7 @@ Each prediction is assigned a score between 0 and 1.
 FeaturePlot(pbmc3k, features = c("pDC", "CD16 Mono", "Treg"),  reduction = "ref.umap", cols = c("lightgrey", "darkred"), ncol = 3) & theme(plot.title = element_text(size = 10))
 ```
 
-```{r save.img, include=FALSE}
+```{r save.img, include=TRUE}
 library(ggplot2)
 plot <- FeaturePlot(pbmc3k, features = "CD16 Mono",  reduction = "ref.umap", cols = c("lightgrey", "darkred"))  + ggtitle("CD16 Mono") + theme(plot.title = element_text(hjust = 0.5, size = 30)) + labs(color = "Prediction Score") +  xlab("UMAP 1") + ylab("UMAP 2") + 
   theme(axis.title = element_text(size = 18), legend.text = element_text(size = 18), legend.title = element_text(size = 25)) 
@@ -198,7 +196,7 @@ In our [manuscript](https://doi.org/10.1016/j.cell.2021.04.048), we map a query 
 
 We emphasize that if users are attempting to map datasets where the underlying samples are not PBMC, or contain cell types that are not present in the reference, computing a 'de novo' visualization is an important step in interpreting their dataset.
 
-```{r hiddendiet, include=FALSE}
+```{r hiddendiet, include=TRUE}
 reference <- DietSeurat(reference, counts = FALSE, dimreducs = "spca")
 pbmc3k <- DietSeurat(pbmc3k, counts = FALSE, dimreducs = "ref.spca")
 ```
@@ -283,8 +281,8 @@ If you want to save and load a cached index for a `Neighbor` object generated wi
 
 ```{r neighbor.demo}
 bm[["spca.annoy.neighbors"]]
-SaveAnnoyIndex(object = bm[["spca.annoy.neighbors"]], file = "../data/reftmp.idx")
-bm[["spca.annoy.neighbors"]] <- LoadAnnoyIndex(object = bm[["spca.annoy.neighbors"]], file = "../data/reftmp.idx")
+SaveAnnoyIndex(object = bm[["spca.annoy.neighbors"]], file = "/brahms/shared/vignette-data/reftmp.idx")
+bm[["spca.annoy.neighbors"]] <- LoadAnnoyIndex(object = bm[["spca.annoy.neighbors"]], file = "/brahms/shared/vignette-data/reftmp.idx")
 ```
 </details>
 
